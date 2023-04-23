@@ -5,6 +5,8 @@ library(lubridate)
 library(quantmod)
 library(clipr)
 
+# new line
+
 get_yahoo_fin_tick <- function(sym,nm,daysback){
   to_dt = today()
   fr_dt = to_dt - daysback
