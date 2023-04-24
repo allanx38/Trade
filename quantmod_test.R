@@ -3,6 +3,7 @@ library(quantmod)
 library(dplyr)
 library(lubridate)
 
+
 # git remote add origin https://github.com/allanx38/Trade.git
 # git branch -M main
 # git push -u origin main
