@@ -1,0 +1,241 @@
+---
+title: "OH Trend"
+output: html_document
+date: "2023-04-01"
+---
+
+```{r setup, include=FALSE,echo = FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+ast::load_libs()
+#library(dplyr)
+#library(lubridate)
+
+source("../R/OH_Trend_fnc.R")
+
+```
+
+
+
+
+```{r ftse_rn, echo = FALSE, results='asis'}
+#data <- readRDS("ftse_oh_data.rds")
+# tck <- data %>% select(Tick) %>% distinct() 
+
+#tck <- readRDS("/home/allanx38/ast/Data/ftse_trade_list_oh.rds")
+#tck$Tick_csv <- paste0(tck$Tick,".csv")
+
+tck <- get_ftse_ticks()
+
+rn_list         <- NULL
+rn_ln_list      <- NULL
+rn_sht_list     <- NULL
+rn_lng_pb_list  <- NULL
+rn_sht_pb_list <- NULL
+
+for(i in 1:nrow(tck)) {
+#for(i in 1:2) {
+  #loop_data <- data %>% filter(Tick == tck$Tick[i])
+  #loop_data <- read.csv(paste0("/home/allanx38/ast/Data/FTSE_Data/",tck$Tick_csv[i]))
+  loop_data   <- read.csv(paste0("/home/allanx38/ast/Data/FTSE_Data/",tck$ftse_csv[i]))
+  loop_data   <- loop_data %>% filter(Date > "2021-01-01")
+  loop_data   <- loop_data %>% oh_base(days_back = 5)
+  rn_num      <- loop_data$rn[nrow(loop_data)]
+  ls          <- loop_data$OH_LS[nrow(loop_data)]
+  maD_atr_num <- loop_data$maD_atr[nrow(loop_data)]
+  maOL3_num   <- loop_data$maOL3[nrow(loop_data)]
+  maOH3_num   <- loop_data$maOH3[nrow(loop_data)]
+  atr_num     <- loop_data$atr[nrow(loop_data)]
+
+  # standard trend - S or L
+  if(rn_num <= 4){
+    
+    res_rn <- loop_data %>%
+             select(1:6,atr,rn,trn,LS,maOH,maOH3,maOL,maOL3,OH_LS,maD_atr) %>%
+             tail(n=7)
+    
+    rn_list <- bind_rows(rn_list, res_rn)
+  }
+  
+  # Strong long trends
+  if(ls == "L"){
+    if(rn_num >= 5){
+      if(maD_atr_num >= 15){
+        res_rn_lng <- loop_data %>%
+             select(1:6,atr,rn,trn,LS,maOH,maOH3,maOL,maOL3,OH_LS,maD_atr) %>%
+             tail(n=7)
+        rn_ln_list <- bind_rows(rn_ln_list, res_rn_lng)
+      }
+    }
+  }
+
+  # Strong Short trends    
+  if(ls == "S"){
+    if(rn_num >= 5){
+      if(maD_atr_num <= -15){
+        res_sht_lng <- loop_data %>%
+             select(1:6,atr,rn,trn,LS,maOH,maOH3,maOL,maOL3,OH_LS,maD_atr) %>%
+             tail(n=7)
+        rn_sht_list <- bind_rows(rn_sht_list, res_sht_lng)
+      }
+    }
+  }
+      
+  # Strong Long with pullback 
+  if(ls == "L"){
+    if(maD_atr_num >= 15){
+      if(maOL3_num/atr_num > 0.5){
+        res_rn_lng_pb <- loop_data %>%
+             select(1:6,atr,rn,trn,LS,maOH,maOH3,maOL,maOL3,OH_LS,maD_atr) %>%
+             tail(n=7)
+        rn_lng_pb_list <- bind_rows(rn_lng_pb_list, res_rn_lng_pb)
+      }
+    }
+  }
+  
+  
+  # Strong Short with pullback 
+  if(ls == "S"){
+    if(maD_atr_num <= -15){
+      if(maOH3_num/atr_num > 0.5){
+        res_sht_pb <- loop_data %>%
+             select(1:6,atr,rn,trn,LS,maOH,maOH3,maOL,maOL3,OH_LS,maD_atr) %>%
+             tail(n=7)
+        rn_sht_pb_list <- bind_rows(rn_sht_pb_list, res_sht_pb)
+      }
+    }
+  }
+  
+  
+}
+
+res_list <- list(rn_list = rn_list, 
+                 rn_ln_list = rn_ln_list, 
+                 rn_sht_list = rn_sht_list,
+                 rn_lng_pb_list = rn_lng_pb_list,
+                 rn_sht_pb_list = rn_sht_pb_list)
+
+```
+
+
+## FTSE 100
+
+```{r ftse_pr, results='asis'}
+
+  ftse_100 <-  get_ftse_csv_file("^FTSE.csv")
+
+  ftse_100_res <- ftse_100 %>% oh_base %>% 
+    select(1:6,atr,rn,trn,LS,maOH,maOH3,maOL,maOL3,OH_LS,maD_atr) %>%
+             tail(n=10)
+  
+  print(ftse_100_res %>% adorn_rounding() %>% knitr::kable() )
+
+```
+
+
+
+## Low rn - LNG - in t1_lng_ticks
+
+t1_lng_ticks - gave good historical results
+
+```{r rn_list, results='asis'}
+
+  # res_rn holds trades from standard approach ...
+
+  inst_nm <- unique( res_list$rn_list$Tick )
+
+  #  Ticks that gave good hist results
+  t1_lng_ticks <- readRDS("/home/allanx38/ast/Data/t1_lng_ticks.rds") %>% as.data.frame()
+  lng_ticks <- t1_lng_ticks$Tick
+
+  for( i in 1 : length(inst_nm) ){
+    loop_data <- res_list$rn_list %>% filter(Tick == inst_nm[i]) %>% adorn_rounding()
+    num <- nrow(loop_data)
+    if(loop_data$LS[num]=="L" & loop_data$Tick[1] %in% lng_ticks){
+          print(loop_data %>% arrange(Date) %>% knitr::kable() )     
+    }
+  }
+
+```
+
+
+
+
+## Low rn - SHT
+
+```{r results='asis'}
+
+  inst_nm <- unique( res_list$rn_list$Tick )
+  for( i in 1 : length(inst_nm) ){
+    loop_data <- res_list$rn_list %>% filter(Tick == inst_nm[i]) %>% adorn_rounding()
+    num <- nrow(loop_data)
+    if(loop_data$LS[num]=="S"){
+          print(loop_data %>% arrange(Date) %>% knitr::kable() )     
+    }
+  }
+
+```
+
+
+## Long
+
+```{r rn_ln_list, results='asis',echo = FALSE}
+
+inst_nm <- unique( res_list$rn_ln_list$Tick )
+  for( i in 1 : length(inst_nm) ){
+    loop_data <- res_list$rn_ln_list %>% filter(Tick == inst_nm[i])
+    print(loop_data %>% knitr::kable() )   
+  }
+
+```
+
+
+## Short
+
+
+```{r rn_sht_list, results='asis',echo = FALSE}
+
+#if(nrow(res_list$rn_sht_list) > 0){
+if( !is.null(res_list$rn_sht_list) )
+{
+  inst_nm <- unique( res_list$rn_sht_list$Tick )
+    for( i in 1 : length(inst_nm) ){
+      loop_data <- res_list$rn_sht_list %>% filter(Tick == inst_nm[i])
+      if(nrow(loop_data)>0){
+        print(loop_data %>% knitr::kable() )   
+      }
+    }
+}
+
+```
+
+## Long Pull Back
+
+```{r rn_lng_pb_list, results='asis',echo = FALSE}
+
+if( !is.null(res_list$rn_lng_pb_list) )
+{
+  inst_nm <- unique( res_list$rn_lng_pb_list$Tick )
+    for( i in 1 : length(inst_nm) ){
+      loop_data <- res_list$rn_lng_pb_list %>% filter(Tick == inst_nm[i])
+      print(loop_data %>% knitr::kable() )   
+  }
+}
+
+```
+
+
+## Short Pull Back
+
+```{r ftse_pb_sht, results='asis',echo = FALSE}
+
+if( !is.null(res_list$rn_sht_pb_list) )
+{
+  inst_nm <- unique( res_list$rn_sht_pb_list$Tick )
+    for( i in 1 : length(inst_nm) ){
+      loop_data <- res_list$rn_sht_pb_list %>% filter(Tick == inst_nm[i])
+      print(loop_data %>% knitr::kable() )   
+  }
+}
+
+```
