@@ -1,34 +1,83 @@
 
 
-# FTSE 100 ----------------------------------------------------------------
-
-get_ftse_ticks <- function(){
-  ftse_ticks <- list.files(path="/home/allanx38/ast/Data/FTSE_Data")
+#' get_folder_ticks
+#'
+#' @param get_folder_FUN
+#'
+#' @return
+#' @export
+#'
+#' @examples
+get_folder_ticks <- function(get_folder_FUN){
+  ftse_ticks <- list.files(path = get_folder_FUN())
   ftse_ticks <- as.data.frame(ftse_ticks)
   ftse_ticks <- ftse_ticks %>% rename(csv = ftse_ticks)
-  ftse_ticks$ftse_tick <- stringr::str_sub(ftse_ticks$csv, 0,-5)
+  ftse_ticks$tick <- stringr::str_sub(ftse_ticks$csv, 0,-5)
+  return(ftse_ticks)
+}
+
+# FTSE 100 ----------------------------------------------------------------
+
+
+#' get_ftse_ticks
+#'
+#' @return
+#' @export
+#'
+#'
+get_ftse_ticks <- function(){
+  ftse_ticks <- get_folder_ticks(get_ftse_folder)
   return(ftse_ticks)
 }
 
 
+
+#' get_ftse_csv_file
+#'
+#' @param csv_nm
+#'
+#' @return
+#' @export
+#'
+#'
 get_ftse_csv_file <- function(csv_nm){
   read.csv( paste0("/home/allanx38/ast/Data/FTSE_Data/", csv_nm  ) )
 }
 
 
+get_ftse_folder <- function(csv_nm){
+  return("/home/allanx38/ast/Data/FTSE_Data/")
+}
+
+
 # Dow ----------------------------------------------------------------
 
+#' get_dow_ticks
+#'
+#' @return
+#' @export
+#'
 get_dow_ticks <- function(){
-  dow_ticks <- list.files(path="/home/allanx38/ast/Data/Dow_Data")
-  dow_ticks <- as.data.frame(dow_ticks)
-  dow_ticks <- dow_ticks %>% rename(csv = dow_ticks)
-  dow_ticks$dow_tick <- stringr::str_sub(dow_ticks$csv, 0,-5)
+  dow_ticks <- get_folder_ticks(get_dow_folder)
   return(dow_ticks)
 }
 
 
+
+#' get_dow_csv_file
+#'
+#' @param csv_nm
+#'
+#' @return
+#' @export
+#'
 get_dow_csv_file <- function(csv_nm){
   read.csv( paste0("/home/allanx38/ast/Data/Dow_Data/", csv_nm  ) )
+}
+
+
+get_dow_folder <- function(csv_nm){
+  return("/home/allanx38/ast/Data/Dow_Data/")
 }
 
 
@@ -36,10 +85,7 @@ get_dow_csv_file <- function(csv_nm){
 # Dax ----------------------------------------------------------------
 
 get_dax_ticks <- function(){
-  dow_ticks <- list.files(path="/home/allanx38/ast/Data/Dax_Data")
-  dow_ticks <- as.data.frame(dow_ticks)
-  dow_ticks <- dow_ticks %>% rename(csv = dow_ticks)
-  dow_ticks$dow_tick <- stringr::str_sub(dow_ticks$csv, 0,-5)
+  dow_ticks <- get_folder_ticks(get_dax_folder)
   return(dow_ticks)
 }
 
@@ -48,13 +94,15 @@ get_dax_csv_file <- function(csv_nm){
   read.csv( paste0("/home/allanx38/ast/Data/Dax_Data/", csv_nm  ) )
 }
 
+get_dax_folder <- function(csv_nm){
+  return("/home/allanx38/ast/Data/Dax_Data/")
+}
+
+
 # SP500 ----------------------------------------------------------------
 
 get_sp500_ticks <- function(){
-  dow_ticks <- list.files(path="/home/allanx38/ast/Data/SP500_Data")
-  dow_ticks <- as.data.frame(dow_ticks)
-  dow_ticks <- dow_ticks %>% rename(csv = dow_ticks)
-  dow_ticks$dow_tick <- stringr::str_sub(dow_ticks$csv, 0,-5)
+  dow_ticks <- get_folder_ticks(get_sp500_folder)
   return(dow_ticks)
 }
 
@@ -64,6 +112,9 @@ get_sp500_csv_file <- function(csv_nm){
 }
 
 
+get_sp500_folder <- function(csv_nm){
+  return("/home/allanx38/ast/Data/SP500_Data/")
+}
 
 
 
