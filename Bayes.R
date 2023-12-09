@@ -2,6 +2,8 @@
 # Git Test 2
 # Add some code
 
+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
+
 # Compute P(A)
 p_A <- nrow(subset(where9am, location == "office")) / nrow(where9am)
 
