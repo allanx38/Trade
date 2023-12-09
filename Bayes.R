@@ -1,5 +1,5 @@
 
-# Git Test
+# Git Test 2
 
 # Compute P(A)
 p_A <- nrow(subset(where9am, location == "office")) / nrow(where9am)
